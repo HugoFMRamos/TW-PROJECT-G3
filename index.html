@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+    <link rel="stylesheet" href="/src/style.css" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>SketchStream</title>
+  </head>
+  <body>
+    <div class="container">
+      <canvas id="draw" width="600" height="400"></canvas>
+
+      <div id="controls" class="panel">
+        <h3>Tools</h3>
+
+        <label>Color:</label>
+        <div id="color-options" class="color-row">
+          <div class="color-btn" data-color="#000" style="background:#000"></div>
+          <div class="color-btn" data-color="#ff0000" style="background:#ff0000"></div>
+          <div class="color-btn" data-color="#00ff00" style="background:#00ff00"></div>
+          <div class="color-btn" data-color="#0000ff" style="background:#0000ff"></div>
+          <div class="color-btn" data-color="#ffff00" style="background:#ffff00"></div>
+        </div>
+
+        <div id="color-options" class="color-row">
+          <div class="color-btn" data-color="#444" style="background:#444"></div>
+          <div class="color-btn" data-color="#ff4444" style="background:#ff4444"></div>
+          <div class="color-btn" data-color="#44ff44" style="background:#44ff44"></div>
+          <div class="color-btn" data-color="#4444ff" style="background:#4444ff"></div>
+          <div class="color-btn" data-color="#ffff44" style="background:#ffff44"></div>
+        </div>
+
+        <div id="color-options" class="color-row">
+          <div class="color-btn" data-color="#888" style="background:#888"></div>
+          <div class="color-btn" data-color="#ff8888" style="background:#ff8888"></div>
+          <div class="color-btn" data-color="#88ff88" style="background:#88ff88"></div>
+          <div class="color-btn" data-color="#8888ff" style="background:#8888ff"></div>
+          <div class="color-btn" data-color="#ffff88" style="background:#ffff88"></div>
+        </div>
+
+        <div id="color-options" class="color-row">
+          <div class="color-btn" data-color="#aaa" style="background:#aaa"></div>
+          <div class="color-btn" data-color="#ffaaaa" style="background:#ffaaaa"></div>
+          <div class="color-btn" data-color="#aaffaa" style="background:#aaffaa"></div>
+          <div class="color-btn" data-color="#aaaaff" style="background:#aaaaff"></div>
+          <div class="color-btn" data-color="#ffffaa" style="background:#ffffaa"></div>
+        </div>
+
+        <label>Brush Size:</label>
+        <input id="brush-size" type="range" min="1" max="40" value="3" />
+
+        <button id="eraser" class="tool-btn">Eraser</button>
+      </div>
+    </div>
+    
+    <script type="module" src="/src/main.js"></script>
+  </body>
+</html>
