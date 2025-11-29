@@ -3,12 +3,26 @@
   <head>
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/vite.svg" />
-    <link rel="stylesheet" href="/src/style.css" />
+    <link rel="stylesheet" href="style.css" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>SketchStream</title>
+    <script>
+      const roomName = "<%= roomName %>"
+    </script>
+    <script defer src="http://localhost:3000/socket.io/socket.io.js"></script>
+    <script type="module" src="client.js"></script>
   </head>
   <body>
     <div class="container">
+      <div class="chat-panel">
+        <div id="message-container" class="messages"></div>
+        
+        <form id="send-container">
+          <input type="text" id="message-input" placeholder="Type a message..." autocomplete="off"/>
+          <button type="submit">Send</button>
+        </form>
+      </div>
+
       <canvas id="draw" width="600" height="400"></canvas>
 
       <div id="controls" class="panel">
@@ -53,7 +67,5 @@
         <button id="eraser" class="tool-btn">Eraser</button>
       </div>
     </div>
-    
-    <script type="module" src="/src/main.js"></script>
   </body>
 </html>

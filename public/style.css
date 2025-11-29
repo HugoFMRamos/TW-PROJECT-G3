@@ -3,7 +3,7 @@ body {
   justify-content: center;
   align-items: center;
   height: 100vh;
-  background: #f0f0f0;
+  background: #2CA2EB;
   margin: 0;
   font-family: sans-serif;
 }
@@ -15,7 +15,7 @@ body {
 }
 
 canvas {
-  border: 5px solid #333;
+  border: 5px solid #2482bd;
   background: white;
   box-shadow: 0 4px 10px rgba(0,0,0,0.1);
   cursor: crosshair;
@@ -23,7 +23,7 @@ canvas {
 
 .panel {
   background: #ffffff;
-  border: 5px solid #333;
+  border: 5px solid #2482bd;
   padding: 16px;
   box-shadow: 0 4px 10px rgba(0,0,0,0.1);
   width: 180px;
