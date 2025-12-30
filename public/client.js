@@ -30,6 +30,7 @@ messageForm.addEventListener('submit', e => {
   const message = messageInput.value;
   appendMessage(`You: ${message}`);
   socket.emit('send-chat-message', message);
+  checkMessage(message);
   messageInput.value = '';
 });
 
@@ -108,3 +109,16 @@ socket.on('drawing-history', (history) => {
     ctx.stroke();
   });
 });
+
+// --- GAME LOGIC ---
+
+const wordCont = document.getElementById("wordCont");
+const words = ["monkey", "elephant", "zebra", "lion", "dolphin"];
+let currentWord = words[Math.floor(Math.random() * words.length)];
+wordCont.innerHTML = currentWord;
+
+function checkMessage(msg) {
+  if (msg == currentWord) {
+    appendMessage("You got it!")
+  }
+};
