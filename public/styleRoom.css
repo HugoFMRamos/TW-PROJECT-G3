@@ -62,6 +62,10 @@ canvas {
   background: #005ec9;
 }
 
+.tool-btn-active {
+  background: #4d00c9;  
+}
+
 #brush-size {
   -webkit-appearance: none;
   appearance: none; 
@@ -119,13 +123,28 @@ canvas {
 /* EACH MESSAGE */
 .message {
   padding: 8px 12px;
-  background: #e6f4ff;
-  color: #02395c;
   border-radius: 8px;
   max-width: 80%;
   word-wrap: break-word;
   font-size: 14px;
+}
+
+.regular {
+  background: #e6f4ff;
+  color: #02395c;
   border-left: 4px solid #2CA2EB;
+}
+
+.status {
+  background: #ddffe4;
+  color: #025c16;
+  border-left: 4px solid #27df4f;
+}
+
+.correct {
+  background: #ffdef7;
+  color: #5c0246;
+  border-left: 4px solid #e034b5;
 }
 
 /* SEND MESSAGE FORM */
@@ -167,7 +186,16 @@ canvas {
 
 /* HEADER */
 header {
-  margin-top: 20vh;
+  margin-top: 15vh;
+  margin-bottom: 2vh;
   text-align: center;
   color: white;
+}
+
+h1 {
+  padding: 15px;
+  background: #2482bd;
+  border-radius: 15px;
+  width: fit-content;
+  margin: auto;
 }

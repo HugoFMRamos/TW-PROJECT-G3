@@ -10,6 +10,7 @@ app.use(express.urlencoded({ extended: true }))
 
 // Store rooms: { roomName: { users: {socketId: name}, history: [] } }
 const rooms = {}
+const words = ["monkey", "elephant", "zebra", "lion", "dolphin"]
 
 app.get('/', (req, res) => {
   res.render('index', { rooms: rooms })
@@ -20,7 +21,11 @@ app.post('/room', (req, res) => {
   if (rooms[room] != null) {
     return res.redirect('/')
   }
-  rooms[room] = { users: {}, history: [] }
+  rooms[room] = { 
+    users: {}, 
+    history: [], 
+    currentWord: words[Math.floor(Math.random() * words.length)],
+    artist: null }
   res.redirect(room)
   io.emit('room-created', room)
 })
@@ -44,6 +49,20 @@ io.on('connection', socket => {
     socket.join(room)
     rooms[room].users[socket.id] = name
 
+    // Logs all users in the room when a new user joins
+    console.log(Object.values(rooms[room].users))
+
+    // Displays the current word to the user
+    socket.emit('current-word', rooms[room].currentWord)
+
+    // Defaults room's creator as artist
+    if (!rooms[room].artist) {
+      rooms[room].artist = socket.id
+      socket.emit("you-are-artist", true)
+    } else {
+      socket.emit("you-are-artist", false)
+    }
+
     // Notify others in the room
     socket.to(room).emit('user-connected', name)
 
@@ -56,6 +75,9 @@ io.on('connection', socket => {
   // Drawing event
   socket.on('drawing', (room, data) => {
     if (!rooms[room]) return
+
+    // Prevents user from drawing if they are not the artist
+    if (rooms[room].artist !== socket.id) return
 
     // Save drawing to room history
     rooms[room].history.push(data)
@@ -84,6 +106,19 @@ io.on('connection', socket => {
         socket.to(room).emit('user-disconnected', name)
         delete rooms[room].users[socket.id]
       }
+
+      // Logs all users in the room when a user disconnects
+      console.log(Object.values(rooms[room].users))
+    })
+  })
+
+  // User guesses word correctly
+  socket.on("word-guessed-correctly", () => {
+    const userRooms = getUserRooms(socket)
+    userRooms.forEach(room => {
+      const newWord = words[Math.floor(Math.random() * words.length)]
+      rooms[room].currentWord = newWord
+      io.to(room).emit("current-word", newWord)
     })
   })
 })

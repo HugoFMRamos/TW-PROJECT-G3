@@ -14,7 +14,8 @@
   </head>
   <body>
     <header>
-      <h1>The word is: <span id="wordCont"></span></h1>
+      <h1 id="artHeader">The word is: <span id="wordCont"></span></h1>
+      <h1 id="notartHeader" hidden>Guess the word being drawn!</h1>
     </header>
     <div class="container">
       <div class="chat-panel">
@@ -26,7 +27,7 @@
         </form>
       </div>
 
-      <canvas id="draw" width="600" height="400"></canvas>
+      <canvas id="draw" width="600" height="500"></canvas>
 
       <div id="controls" class="panel">
         <h3>Tools</h3>
@@ -68,6 +69,8 @@
         <input id="brush-size" type="range" min="1" max="40" value="3" />
 
         <button id="eraser" class="tool-btn">Eraser</button>
+        <button id="undo" class="tool-btn">Undo</button>
+        <button id="clear" class="tool-btn">Clear</button>
       </div>
     </div>
   </body>
