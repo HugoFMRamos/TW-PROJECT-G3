@@ -10,7 +10,7 @@ app.use(express.urlencoded({ extended: true }))
 
 // Store rooms: { roomName: { users: {socketId: name}, history: [] } }
 const rooms = {}
-const words = ["monkey", "elephant", "zebra", "lion", "dolphin"]
+const words = ['monkey', 'elephant', 'zebra', 'lion', 'dolphin']
 
 app.get('/', (req, res) => {
   res.render('index', { rooms: rooms })
@@ -41,30 +41,30 @@ server.listen(3000, () => console.log('Server running on port 3000'))
 
 // --- SOCKET.IO ---
 io.on('connection', socket => {
-
   // New user joins a room
-  socket.on('new-user', (room, name) => {
+  socket.on('new-user', (room, name, callback) => {
     if (!rooms[room]) return
-
-    socket.join(room)
-    rooms[room].users[socket.id] = name
-
-    // Logs all users in the room when a new user joins
-    console.log(Object.values(rooms[room].users))
-
-    // Displays the current word to the user
-    socket.emit('current-word', rooms[room].currentWord)
-
-    // Defaults room's creator as artist
-    if (!rooms[room].artist) {
-      rooms[room].artist = socket.id
-      socket.emit("you-are-artist", true)
-    } else {
-      socket.emit("you-are-artist", false)
+    socket.join(room);
+    const users = Object.values(rooms[room].users);
+    if (users.includes(name)) {
+      callback({ error: 'Name already in use' });
+      return;
     }
+    rooms[room].users[socket.id] = name;
+    console.log(Object.values(rooms[room].users));
+    callback({ success: true });
 
     // Notify others in the room
     socket.to(room).emit('user-connected', name)
+
+    // Assigns first artist
+    if (!rooms[room].artist) rooms[room].artist = socket.id
+    Object.keys(rooms[room].users).forEach(id => {
+      io.to(id).emit('artist-swap', id === rooms[room].artist)
+    })
+
+    // Displays the current word to the artist
+    socket.emit('current-word', rooms[room].currentWord)
 
     // Send existing drawing history to new user
     if (rooms[room].history.length > 0) {
@@ -75,9 +75,6 @@ io.on('connection', socket => {
   // Drawing event
   socket.on('drawing', (room, data) => {
     if (!rooms[room]) return
-
-    // Prevents user from drawing if they are not the artist
-    if (rooms[room].artist !== socket.id) return
 
     // Save drawing to room history
     rooms[room].history.push(data)
@@ -101,32 +98,52 @@ io.on('connection', socket => {
   socket.on('disconnect', () => {
     const userRooms = getUserRooms(socket)
     userRooms.forEach(room => {
-      const name = rooms[room].users[socket.id]
+      const roomData = rooms[room]
+      const name = roomData.users[socket.id]
       if (name) {
+        if (roomData.artist === socket.id) swapArtist(room)
         socket.to(room).emit('user-disconnected', name)
-        delete rooms[room].users[socket.id]
+        delete roomData.users[socket.id]
+        if (roomData.users.length == 0) delete rooms[room]
       }
 
       // Logs all users in the room when a user disconnects
-      console.log(Object.values(rooms[room].users))
+      console.log(Object.values(roomData.users))
     })
   })
 
   // User guesses word correctly
-  socket.on("word-guessed-correctly", () => {
+  socket.on('correct-guess', (name) => {
     const userRooms = getUserRooms(socket)
     userRooms.forEach(room => {
       const newWord = words[Math.floor(Math.random() * words.length)]
       rooms[room].currentWord = newWord
-      io.to(room).emit("current-word", newWord)
+      io.to(room).emit('correct-message', name)
+      io.to(room).emit('current-word', newWord)
+      swapArtist(room)
     })
   })
 })
 
-// --- Helper function ---
+// --- Helper functions ---
 function getUserRooms(socket) {
   return Object.entries(rooms).reduce((userRooms, [name, room]) => {
     if (room.users[socket.id] != null) userRooms.push(name)
     return userRooms
   }, [])
+}
+
+function swapArtist(room) {
+  const roomData = rooms[room]
+  if (!roomData) return
+
+  const userIds = Object.keys(roomData.users)
+
+  const currentIndex = userIds.indexOf(roomData.artist)
+  const nextArtist = roomData.artist = userIds[(currentIndex + 1) % userIds.length]
+
+  userIds.forEach(id => {
+    io.to(id).emit('artist-swap', id === nextArtist)
+  })
+  console.log('artist:', roomData.users[nextArtist])
 }

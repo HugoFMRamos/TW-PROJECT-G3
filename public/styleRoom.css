@@ -1,5 +1,4 @@
 body {
-  height: 100vh;
   background: #2CA2EB;
   margin: 0;
   font-family: sans-serif;
@@ -111,6 +110,7 @@ canvas {
 /* MESSAGE AREA */
 .messages {
   flex: 1;
+  max-height: 400px;
   overflow-y: auto;
   padding: 14px;
   display: flex;

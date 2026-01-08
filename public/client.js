@@ -4,10 +4,10 @@ const socket = io('http://localhost:3000');
 const canvas = document.getElementById('draw');
 const ctx = canvas.getContext('2d');
 const eraser = document.getElementById('eraser');
-const wordCont = document.getElementById("wordCont");
-const artHeader = document.getElementById("artHeader");
-const notartHeader = document.getElementById("notartHeader");
-const controls = document.getElementById("controls");
+const wordCont = document.getElementById('wordCont');
+const artHeader = document.getElementById('artHeader');
+const notartHeader = document.getElementById('notartHeader');
+const controls = document.getElementById('controls');
 
 
 let drawing = false;
@@ -17,9 +17,8 @@ let currentColor = '#000';
 let brushSize = 3;
 let erasing = false;
 let canvasStates = [];
-let currentWord = "";
+let currentWord = '';
 let isArtist = false;
-let canDraw = true;
 
 // --- CHAT SETUP ---
 const messageContainer = document.getElementById('message-container');
@@ -29,46 +28,63 @@ const messageInput = document.getElementById('message-input');
 // Name function
 function getName() {
   // Store's user's input name in tab
-  let name = sessionStorage.getItem("userName");
+  let name = sessionStorage.getItem('userName');
+
   while (!name) {
     name = prompt('What is your name?');
-
-    // Returns to previous page on cancel
-    if (name === null) {
-      history.back();
-    }
+    if (name === null) history.back();
   }
-  sessionStorage.setItem("userName", name);
+  
+  socket.emit('new-user', roomName, name, (response) => {
+    if (response.error) {
+      alert(response.error);
+      history.back();
+    } else {
+      sessionStorage.setItem('userName', name);
+      appendMessage('You joined', 'status');
+    }
+  });
+
   return name;
 }
-
 const name = getName();
-appendMessage('You joined', "status");
-socket.emit('new-user', roomName, name);
 
 // Asks user to confirm before leaving game page
-window.addEventListener("beforeunload", (event) => {
+window.addEventListener('beforeunload', (event) => {
   event.preventDefault();
 });
 
 // --- CHAT EVENTS ---
-socket.on('chat-message', data => appendMessage(`${data.name}: ${data.message}`, "regular"));
-socket.on('user-connected', name => appendMessage(`${name} connected`, "status"));
-socket.on('user-disconnected', name => appendMessage(`${name} disconnected`, "status"));
+socket.on('chat-message', data => appendMessage(`${data.name}: ${data.message}`, 'regular'));
+socket.on('user-connected', name => appendMessage(`${name} connected`, 'status'));
+socket.on('user-disconnected', name => appendMessage(`${name} disconnected`, 'status'));
+socket.on('correct-message', name => appendMessage(`${name} guessed correctly! Next word...`, 'correct'));
 
 messageForm.addEventListener('submit', e => {
   e.preventDefault();
   const message = messageInput.value;
-  if (message == "") return;
-  appendMessage(`You: ${message}`, "regular");
+  if (message == '') return;
+  if (message == currentWord) {
+    if (isArtist) {
+      appendMessage(`Don't send the answer!`, 'status');
+      messageInput.value = '';
+      return;
+    } else {
+      appendMessage(`You: ${message}`, 'regular');
+      socket.emit('send-chat-message', message);
+      messageInput.value = '';
+      socket.emit('correct-guess', name);
+      return;
+    }
+  };
+  appendMessage(`You: ${message}`, 'regular');
   socket.emit('send-chat-message', message);
   messageInput.value = '';
-  checkMessage(message);
 });
 
 function appendMessage(message, type) {
   const messageElement = document.createElement('div');
-  messageElement.classList.add("message");
+  messageElement.classList.add('message');
   messageElement.classList.add(type);
   messageElement.innerText = message;
   messageContainer.append(messageElement);
@@ -76,7 +92,7 @@ function appendMessage(message, type) {
 
 // --- DRAWING EVENTS ---
 function startDrawing(e) {
-  if (!canDraw) return;
+  if (!isArtist) return;
   drawing = true;
   [lastX, lastY] = [e.offsetX, e.offsetY];
 }
@@ -113,16 +129,16 @@ document.querySelectorAll('.color-btn').forEach(btn => {
   btn.addEventListener('click', () => { 
     currentColor = btn.dataset.color;
     erasing = false;
-    eraser.classList.remove("tool-btn-active");
+    eraser.classList.remove('tool-btn-active');
   });
 });
 document.getElementById('brush-size').addEventListener('input', e => brushSize = e.target.value);
 eraser.addEventListener('click', () => {
   erasing = !erasing;
   if (erasing) {
-    eraser.classList.add("tool-btn-active");
+    eraser.classList.add('tool-btn-active');
   } else {
-    eraser.classList.remove("tool-btn-active");
+    eraser.classList.remove('tool-btn-active');
   }
 });
 document.getElementById('undo').addEventListener('click', () => {
@@ -168,29 +184,22 @@ socket.on('drawing-history', (history) => {
 });
 
 // --- GAME LOGIC ---
-socket.on("current-word", (word) => {
+socket.on('current-word', (word) => {
   currentWord = word;
   wordCont.innerHTML = word;
 });
 
 // Check if user is the current artist
-socket.on("you-are-artist", (artist) => {
-  if (!artist) {
-    controls.style.display = "none";
-    artHeader.style.display = "none";
-    notartHeader.style.display = "block";
-    canDraw = false;
+socket.on('artist-swap', (value) => {
+  isArtist = value;
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  if (isArtist) {
+    controls.style.display = 'block';
+    artHeader.style.display = 'block';
+    notartHeader.style.display = 'none';
   } else {
-    controls.style.display = "block";
-    artHeader.style.display = "block";
-    notartHeader.style.display = "none";
-    canDraw = true;
+    controls.style.display = 'none';
+    artHeader.style.display = 'none';
+    notartHeader.style.display = 'block';
   }
 })
-
-function checkMessage(msg) {
-  if (msg == currentWord) {
-    appendMessage("You got it! Next word...", "correct");
-    socket.emit("word-guessed-correctly")
-  }
-};
