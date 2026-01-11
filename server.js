@@ -26,6 +26,8 @@ app.post('/room', (req, res) => {
     users: {}, 
     history: [], 
     currentWord: words[Math.floor(Math.random() * words.length)],
+    timer: null,
+    timeLeft: 60,
     artist: null }
   res.redirect(room)
   io.emit('room-created', room)
@@ -119,6 +121,9 @@ io.on('connection', socket => {
 
     // Send first word to artist
     io.to(roomData.artist).emit('current-word', roomData.currentWord);
+
+    // Start timer
+    startRoomTimer(room);
   });
 
   // Drawing event
@@ -190,11 +195,17 @@ socket.on('disconnect', () => {
   socket.on('correct-guess', (name) => {
     const userRooms = getUserRooms(socket)
     userRooms.forEach(room => {
+      const roomData = rooms[room];
+      if (!roomData) return;
+
       const newWord = words[Math.floor(Math.random() * words.length)]
       rooms[room].currentWord = newWord
+
       io.to(room).emit('correct-message', name)
       io.to(room).emit('current-word', newWord)
+
       swapArtist(room)
+      startRoomTimer(room)
     })
   })
 })
@@ -220,4 +231,36 @@ function swapArtist(room) {
     io.to(id).emit('artist-swap', id === nextArtist)
   })
   console.log('artist:', roomData.users[nextArtist])
+}
+
+function startRoomTimer(room) {
+  const roomData = rooms[room];
+  if (!roomData) return;
+
+  // Clear previous timer if exists
+  if (roomData.timer) clearInterval(roomData.timer);
+  roomData.timeLeft = 60;
+
+  io.to(room).emit('timer-update', roomData.timeLeft);
+
+  roomData.timer = setInterval(() => {
+    roomData.timeLeft -= 1;
+    io.to(room).emit('timer-update', roomData.timeLeft);
+
+    if (roomData.timeLeft <= 0) {
+      clearInterval(roomData.timer);
+      roomData.timer = null;
+
+      // Time ran out → swap artist
+      swapArtist(room);
+
+      // Pick a new word
+      const newWord = words[Math.floor(Math.random() * words.length)];
+      roomData.currentWord = newWord;
+      io.to(room).emit('current-word', newWord);
+
+      // Restart timer for next round
+      startRoomTimer(room);
+    }
+  }, 1000);
 }

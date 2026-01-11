@@ -10,6 +10,7 @@ const notartHeader = document.getElementById('notartHeader');
 const controls = document.getElementById('controls');
 const disconnectBtn = document.getElementById('disconnect');
 const startBtn = document.getElementById('start-game');
+const timerDisplay = document.getElementById('timer');
 
 let drawing = false;
 let lastX = 0;
@@ -68,6 +69,10 @@ socket.on('new-host', (hostName) => {
     startBtn.style.display = Object.keys(roomData.users).length >= 2 ? 'block' : 'none'
   }
 })
+
+socket.on('timer-update', (time) => {
+  if (timerDisplay) timerDisplay.innerText = `Time left: ${time}s`;
+});
 
 startBtn.addEventListener('click', () => {
   socket.emit('start-game', roomName);
