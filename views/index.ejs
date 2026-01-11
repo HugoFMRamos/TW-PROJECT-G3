@@ -21,7 +21,13 @@
       <% Object.keys(rooms).forEach(room => { %>
         <div class="room-item">
           <span class="room-name"><%= room %></span>
-          <a class="join-btn" href="/<%= room %>">Join</a>
+          <% const playerCount = Object.keys(rooms[room].users).length %>
+          <span class="player-count"><%= playerCount %> / 4</span>
+          <% if (playerCount < 4) { %>
+            <a class="join-btn" href="/<%= room %>">Join</a>
+          <% } else { %>
+            <span class="room-full">Room Full</span>
+          <% } %>
         </div>
       <% }) %>
     </div>

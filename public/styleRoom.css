@@ -65,6 +65,23 @@ canvas {
   background: #4d00c9;  
 }
 
+.dis-btn {
+  padding: 15px;
+  background: #2482bd;
+  color: #fff;
+  border: none;
+  border-radius: 15px;
+  cursor: pointer;
+  width: fit-content;
+  margin: auto;
+  font-size: 24px;
+  font-weight: bold;
+}
+
+.dis-btn:hover {
+  background: #0057bb;
+}
+
 #brush-size {
   -webkit-appearance: none;
   appearance: none; 
@@ -198,4 +215,12 @@ h1 {
   border-radius: 15px;
   width: fit-content;
   margin: auto;
+}
+
+/* FOOTER */
+footer {
+  margin-top: 15vh;
+  margin-bottom: 2vh;
+  text-align: center;
+  color: rgb(255, 255, 255);
 }

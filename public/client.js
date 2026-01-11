@@ -8,6 +8,7 @@ const wordCont = document.getElementById('wordCont');
 const artHeader = document.getElementById('artHeader');
 const notartHeader = document.getElementById('notartHeader');
 const controls = document.getElementById('controls');
+const disconnectBtn = document.getElementById('disconnect')
 
 
 let drawing = false;
@@ -149,6 +150,12 @@ document.getElementById('undo').addEventListener('click', () => {
 document.getElementById('clear').addEventListener('click', () => {
   ctx.clearRect(0, 0, canvas.width, canvas.height);
 });
+
+// --- DISCONNECT EVENT ---
+disconnectBtn.addEventListener('click', () => {
+  socket.disconnect()
+  window.location.href = '/'
+})
 
 // --- CANVAS EVENTS ---
 canvas.addEventListener('mousedown', startDrawing);

@@ -11,6 +11,7 @@ app.use(express.urlencoded({ extended: true }))
 // Store rooms: { roomName: { users: {socketId: name}, history: [] } }
 const rooms = {}
 const words = ['monkey', 'elephant', 'zebra', 'lion', 'dolphin']
+const MAX_PLAYERS_PER_ROOM = 4;
 
 app.get('/', (req, res) => {
   res.render('index', { rooms: rooms })
@@ -25,6 +26,7 @@ app.post('/room', (req, res) => {
     users: {}, 
     history: [], 
     currentWord: words[Math.floor(Math.random() * words.length)],
+    host: null,
     artist: null }
   res.redirect(room)
   io.emit('room-created', room)
@@ -46,10 +48,16 @@ io.on('connection', socket => {
     if (!rooms[room]) return
     socket.join(room);
     const users = Object.values(rooms[room].users);
+
+    if(users.length >= MAX_PLAYERS_PER_ROOM) {
+      callback({ error: 'Room is full (2 players max)'})
+    }
+
     if (users.includes(name)) {
       callback({ error: 'Name already in use' });
       return;
     }
+
     rooms[room].users[socket.id] = name;
     console.log(Object.values(rooms[room].users));
     callback({ success: true });
@@ -104,7 +112,10 @@ io.on('connection', socket => {
         if (roomData.artist === socket.id) swapArtist(room)
         socket.to(room).emit('user-disconnected', name)
         delete roomData.users[socket.id]
-        if (roomData.users.length == 0) delete rooms[room]
+        if (Object.keys(roomData.users).length === 0) {
+          delete rooms[room]
+          console.log(`Room "${room}" deleted`)
+        }
       }
 
       // Logs all users in the room when a user disconnects
