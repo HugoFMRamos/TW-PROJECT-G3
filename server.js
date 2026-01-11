@@ -70,7 +70,10 @@ io.on('connection', socket => {
 
     // Join the room
     socket.join(room);
-    rooms[room].users[socket.id] = name;
+    rooms[room].users[socket.id] = { name: name, score: 0 };
+
+    // Broadcast the updated user list to everyone in the room
+    io.in(room).emit('update-scoreboard', Object.values(rooms[room].users));
 
     // Assign host if none
     if (!roomData.host) roomData.host = socket.id;
@@ -143,7 +146,7 @@ io.on('connection', socket => {
     userRooms.forEach(room => {
       socket.to(room).emit('chat-message', {
         message,
-        name: rooms[room].users[socket.id]
+        name: rooms[room].users[socket.id].name
       })
     })
   })
@@ -198,8 +201,15 @@ io.on('connection', socket => {
       const roomData = rooms[room];
       if (!roomData) return;
 
+      // Update scores
+      if (roomData.users[socket.id]) {
+        roomData.users[socket.id].score += 10;
+      }
+      io.in(room).emit('update-scoreboard', Object.values(roomData.users));
+
+      // Change word and artist
       const newWord = words[Math.floor(Math.random() * words.length)]
-      rooms[room].currentWord = newWord
+      roomData.currentWord = newWord
 
       io.to(room).emit('correct-message', name)
       io.to(room).emit('current-word', newWord)

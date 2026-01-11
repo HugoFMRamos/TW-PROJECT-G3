@@ -11,6 +11,7 @@ const controls = document.getElementById('controls');
 const disconnectBtn = document.getElementById('disconnect');
 const startBtn = document.getElementById('start-game');
 const timerDisplay = document.getElementById('timer');
+const scoreCont = document.querySelector(".score-panel")
 
 let drawing = false;
 let lastX = 0;
@@ -104,7 +105,10 @@ window.addEventListener('beforeunload', (event) => {
 
 // --- CHAT EVENTS ---
 socket.on('chat-message', data => appendMessage(`${data.name}: ${data.message}`, 'regular'));
-socket.on('user-connected', name => appendMessage(`${name} connected`, 'status'));
+socket.on('user-connected', (name) => {
+  appendMessage(`${name} connected`, 'status');
+  userScore(name);
+});
 socket.on('user-disconnected', name => appendMessage(`${name} disconnected`, 'status'));
 socket.on('correct-message', name => appendMessage(`${name} guessed correctly! Next word...`, 'correct'));
 
@@ -249,3 +253,14 @@ socket.on('artist-swap', (value) => {
     notartHeader.style.display = 'block';
   }
 })
+
+// --- SCOREBOARD ---
+socket.on('update-scoreboard', (users) => {
+  scoreCont.innerHTML = '';
+  users.forEach(user => {
+    const userDiv = document.createElement('div');
+    userDiv.classList.add('user-score');
+    userDiv.innerText = `${user.name}: ${user.score}`;
+    scoreCont.append(userDiv);
+  });
+});

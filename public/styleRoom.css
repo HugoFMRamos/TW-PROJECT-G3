@@ -227,3 +227,37 @@ footer {
 .fot-btn {
   margin-bottom: 2vh;
 }
+
+/* SCOREBOARD */
+.score-panel {
+  width: 200px;
+  background: #ffffff;
+  border: 5px solid #2482bd;
+  display: flex;
+  justify-content: stretch;
+  flex-direction: column;
+  padding: 0;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+}
+
+.user-score {
+  flex: 1 1 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: #aaaaff;
+  border-bottom: 5px solid #2482bd;
+}
+
+.user-score:nth-child(2) {
+  background-color: #ffaaaa;
+}
+
+.user-score:nth-child(3) {
+  background-color: #aaffaa;
+}
+
+.user-score:last-of-type {
+  background-color: #ffffaa;
+  border-bottom: none;
+}
