@@ -110,7 +110,7 @@ socket.on('user-connected', (name) => {
   userScore(name);
 });
 socket.on('user-disconnected', name => appendMessage(`${name} disconnected`, 'status'));
-socket.on('correct-message', name => appendMessage(`${name} guessed correctly! Next word...`, 'correct'));
+socket.on('correct-message', (name, word) => appendMessage(`${name} guessed <b>${word}</b> correctly! Next word...`, 'correct'));
 
 messageForm.addEventListener('submit', e => {
   e.preventDefault();
@@ -138,7 +138,7 @@ function appendMessage(message, type) {
   const messageElement = document.createElement('div');
   messageElement.classList.add('message');
   messageElement.classList.add(type);
-  messageElement.innerText = message;
+  messageElement.innerHTML = message;
   messageContainer.append(messageElement);
 }
 
@@ -264,3 +264,5 @@ socket.on('update-scoreboard', (users) => {
     scoreCont.append(userDiv);
   });
 });
+
+socket.on('no-guess', (word) => appendMessage(`No one guessed correctly!... The word was: <b>${word}</b>. Next word...`, 'status'))

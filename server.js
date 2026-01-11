@@ -203,17 +203,15 @@ io.on('connection', socket => {
 
       // Update scores
       if (roomData.users[socket.id]) {
-        roomData.users[socket.id].score += 10;
+        roomData.users[socket.id].score += roomData.timeLeft;
       }
+      io.to(room).emit('correct-message', name, roomData.currentWord)
       io.in(room).emit('update-scoreboard', Object.values(roomData.users));
 
       // Change word and artist
       const newWord = words[Math.floor(Math.random() * words.length)]
       roomData.currentWord = newWord
-
-      io.to(room).emit('correct-message', name)
       io.to(room).emit('current-word', newWord)
-
       swapArtist(room)
       startRoomTimer(room)
     })
@@ -262,6 +260,7 @@ function startRoomTimer(room) {
       roomData.timer = null;
 
       // Time ran out → swap artist
+      io.to(room).emit('no-guess', roomData.currentWord);
       swapArtist(room);
 
       // Pick a new word
