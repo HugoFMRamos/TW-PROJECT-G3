@@ -18,7 +18,6 @@ let lastY = 0;
 let currentColor = '#000';
 let brushSize = 3;
 let erasing = false;
-let canvasStates = [];
 let currentWord = '';
 let isHost = false;
 let isArtist = false;
@@ -190,11 +189,6 @@ eraser.addEventListener('click', () => {
     eraser.classList.remove('tool-btn-active');
   }
 });
-document.getElementById('undo').addEventListener('click', () => {
-  if (canvasStates.length === 0) return;
-  const prevCanvas = canvasStates.pop();
-  ctx.putImageData(prevCanvas, 0, 0);
-});
 document.getElementById('clear').addEventListener('click', () => {
   ctx.clearRect(0, 0, canvas.width, canvas.height);
 });
@@ -207,10 +201,7 @@ disconnectBtn.addEventListener('click', () => {
 
 // --- CANVAS EVENTS ---
 canvas.addEventListener('mousedown', startDrawing);
-canvas.addEventListener('mouseup', () => {
-  stopDrawing();
-  canvasStates.push(ctx.getImageData(0, 0, canvas.width, canvas.height));
-});
+canvas.addEventListener('mouseup', stopDrawing);
 canvas.addEventListener('mouseout', stopDrawing);
 canvas.addEventListener('mousemove', draw);
 

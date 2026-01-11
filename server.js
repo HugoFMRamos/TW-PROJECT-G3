@@ -149,46 +149,46 @@ io.on('connection', socket => {
   })
 
   // User disconnects
-socket.on('disconnect', () => {
-  const userRooms = getUserRooms(socket)
+  socket.on('disconnect', () => {
+    const userRooms = getUserRooms(socket)
 
-  userRooms.forEach(room => {
-    const roomData = rooms[room]
-    if (!roomData) return
+    userRooms.forEach(room => {
+      const roomData = rooms[room]
+      if (!roomData) return
 
-    const name = roomData.users[socket.id]
+      const name = roomData.users[socket.id]
 
-    if (name) {
-      // Remove user from room
-      delete roomData.users[socket.id]
+      if (name) {
+        // Remove user from room
+        delete roomData.users[socket.id]
 
-      // Notify others
-      socket.to(room).emit('user-disconnected', name)
+        // Notify others
+        socket.to(room).emit('user-disconnected', name)
 
-      // Swap artist if needed
-      if (roomData.artist === socket.id) swapArtist(room)
+        // Swap artist if needed
+        if (roomData.artist === socket.id) swapArtist(room)
 
-      // Assign a new host if the leaving user was the host
-      if (roomData.host === socket.id) {
-        const remainingUsers = Object.keys(roomData.users)
-        if (remainingUsers.length > 0) {
-          roomData.host = remainingUsers[0] // pick the first remaining user
-          io.to(room).emit('new-host', roomData.users[roomData.host])
-        } else {
-          roomData.host = null
+        // Assign a new host if the leaving user was the host
+        if (roomData.host === socket.id) {
+          const remainingUsers = Object.keys(roomData.users)
+          if (remainingUsers.length > 0) {
+            roomData.host = remainingUsers[0] // pick the first remaining user
+            io.to(room).emit('new-host', roomData.users[roomData.host])
+          } else {
+            roomData.host = null
+          }
+        }
+
+        // Delete room if empty
+        if (Object.keys(roomData.users).length === 0) {
+          delete rooms[room]
+          console.log(`Room "${room}" deleted`)
         }
       }
 
-      // Delete room if empty
-      if (Object.keys(roomData.users).length === 0) {
-        delete rooms[room]
-        console.log(`Room "${room}" deleted`)
-      }
-    }
-
-    console.log(`Room ${room} users:`, Object.values(roomData?.users || {}))
+      console.log(`Room ${room} users:`, Object.values(roomData?.users || {}))
+    })
   })
-})
 
 
   // User guesses word correctly
