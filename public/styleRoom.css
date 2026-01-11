@@ -219,8 +219,11 @@ h1 {
 
 /* FOOTER */
 footer {
-  margin-top: 15vh;
-  margin-bottom: 2vh;
+  margin-top: 10vh;
   text-align: center;
   color: rgb(255, 255, 255);
+}
+
+.fot-btn {
+  margin-bottom: 2vh;
 }
