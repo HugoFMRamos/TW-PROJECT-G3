@@ -8,8 +8,8 @@ const wordCont = document.getElementById('wordCont');
 const artHeader = document.getElementById('artHeader');
 const notartHeader = document.getElementById('notartHeader');
 const controls = document.getElementById('controls');
-const disconnectBtn = document.getElementById('disconnect')
-
+const disconnectBtn = document.getElementById('disconnect');
+const startBtn = document.getElementById('start-game');
 
 let drawing = false;
 let lastX = 0;
@@ -19,6 +19,7 @@ let brushSize = 3;
 let erasing = false;
 let canvasStates = [];
 let currentWord = '';
+let isHost = false;
 let isArtist = false;
 
 // --- CHAT SETUP ---
@@ -43,12 +44,54 @@ function getName() {
     } else {
       sessionStorage.setItem('userName', name);
       appendMessage('You joined', 'status');
+      isHost = response.isHost;
+
+      if (isHost) {
+        startBtn.style.display = 'none'; // initially hidden
+        appendMessage('You are the host! You can start the game when 2+ players join.', 'status');
+      }
+      artHeader.style.display = 'none';
+      notartHeader.style.display = 'none';
     }
   });
 
   return name;
 }
 const name = getName();
+
+socket.on('new-host', (hostName) => {
+  appendMessage(`${hostName} is now the host!`, 'status')
+  
+  // If the new host is this user, show start button
+  if (sessionStorage.getItem('userName') === hostName) {
+    isHost = true
+    startBtn.style.display = Object.keys(roomData.users).length >= 2 ? 'block' : 'none'
+  }
+})
+
+startBtn.addEventListener('click', () => {
+  socket.emit('start-game', roomName);
+});
+
+// Host feedback if not enough players
+socket.on('not-enough-players', () => {
+  alert('At least 2 players are required to start the game.');
+});
+
+socket.on('game-started', () => {
+  appendMessage('The game has started!', 'status');
+  startBtn.style.display = 'none';
+  artHeader.style.display = 'block';
+  notartHeader.style.display = 'block';
+});
+
+// Update room status
+socket.on('room-status', (status) => {
+  // Show start button only to host
+  if (isHost) {
+    startBtn.style.display = status.players >= 2 ? 'block' : 'none';
+  }
+});
 
 // Asks user to confirm before leaving game page
 window.addEventListener('beforeunload', (event) => {

@@ -26,7 +26,6 @@ app.post('/room', (req, res) => {
     users: {}, 
     history: [], 
     currentWord: words[Math.floor(Math.random() * words.length)],
-    host: null,
     artist: null }
   res.redirect(room)
   io.emit('room-created', room)
@@ -45,40 +44,82 @@ server.listen(3000, () => console.log('Server running on port 3000'))
 io.on('connection', socket => {
   // New user joins a room
   socket.on('new-user', (room, name, callback) => {
+    const roomData = rooms[room];
     if (!rooms[room]) return
-    socket.join(room);
+
+    // Game already started
+    if (roomData.started) {
+      callback({ error: 'Game already started' });
+      return;
+    }
+
     const users = Object.values(rooms[room].users);
 
+    // Room full
     if(users.length >= MAX_PLAYERS_PER_ROOM) {
       callback({ error: 'Room is full (2 players max)'})
     }
 
+    // Duplicate name
     if (users.includes(name)) {
       callback({ error: 'Name already in use' });
       return;
     }
 
+    // Join the room
+    socket.join(room);
     rooms[room].users[socket.id] = name;
+
+    // Assign host if none
+    if (!roomData.host) roomData.host = socket.id;
+
     console.log(Object.values(rooms[room].users));
-    callback({ success: true });
+    callback({ success: true, isHost: socket.id === roomData.host});
 
     // Notify others in the room
     socket.to(room).emit('user-connected', name)
 
-    // Assigns first artist
-    if (!rooms[room].artist) rooms[room].artist = socket.id
-    Object.keys(rooms[room].users).forEach(id => {
-      io.to(id).emit('artist-swap', id === rooms[room].artist)
-    })
-
-    // Displays the current word to the artist
-    socket.emit('current-word', rooms[room].currentWord)
-
-    // Send existing drawing history to new user
-    if (rooms[room].history.length > 0) {
-      socket.emit('drawing-history', rooms[room].history)
+    // Send current state
+    socket.emit('current-word', roomData.currentWord);
+    if (roomData.history.length > 0) {
+      socket.emit('drawing-history', roomData.history);
     }
+
+    // Update all users about room start status
+    io.to(room).emit('room-status', {
+      players: Object.keys(roomData.users).length,
+      started: roomData.started,
+      maxPlayers: MAX_PLAYERS_PER_ROOM
+    });
   })
+
+    // Host starts the game
+  socket.on('start-game', (room) => {
+    const roomData = rooms[room];
+    if (!roomData) return;
+
+    // Only host can start
+    if (socket.id !== roomData.host) return;
+
+    // Minimum 2 players to start
+    if (Object.keys(roomData.users).length < 2) {
+      socket.emit('not-enough-players');
+      return;
+    }
+
+    roomData.started = true;
+    io.to(room).emit('game-started');
+
+    // Assign first artist if none
+    if (!roomData.artist) roomData.artist = Object.keys(roomData.users)[0];
+
+    Object.keys(roomData.users).forEach(id => {
+      io.to(id).emit('artist-swap', id === roomData.artist);
+    });
+
+    // Send first word to artist
+    io.to(roomData.artist).emit('current-word', roomData.currentWord);
+  });
 
   // Drawing event
   socket.on('drawing', (room, data) => {
@@ -103,25 +144,47 @@ io.on('connection', socket => {
   })
 
   // User disconnects
-  socket.on('disconnect', () => {
-    const userRooms = getUserRooms(socket)
-    userRooms.forEach(room => {
-      const roomData = rooms[room]
-      const name = roomData.users[socket.id]
-      if (name) {
-        if (roomData.artist === socket.id) swapArtist(room)
-        socket.to(room).emit('user-disconnected', name)
-        delete roomData.users[socket.id]
-        if (Object.keys(roomData.users).length === 0) {
-          delete rooms[room]
-          console.log(`Room "${room}" deleted`)
+socket.on('disconnect', () => {
+  const userRooms = getUserRooms(socket)
+
+  userRooms.forEach(room => {
+    const roomData = rooms[room]
+    if (!roomData) return
+
+    const name = roomData.users[socket.id]
+
+    if (name) {
+      // Remove user from room
+      delete roomData.users[socket.id]
+
+      // Notify others
+      socket.to(room).emit('user-disconnected', name)
+
+      // Swap artist if needed
+      if (roomData.artist === socket.id) swapArtist(room)
+
+      // Assign a new host if the leaving user was the host
+      if (roomData.host === socket.id) {
+        const remainingUsers = Object.keys(roomData.users)
+        if (remainingUsers.length > 0) {
+          roomData.host = remainingUsers[0] // pick the first remaining user
+          io.to(room).emit('new-host', roomData.users[roomData.host])
+        } else {
+          roomData.host = null
         }
       }
 
-      // Logs all users in the room when a user disconnects
-      console.log(Object.values(roomData.users))
-    })
+      // Delete room if empty
+      if (Object.keys(roomData.users).length === 0) {
+        delete rooms[room]
+        console.log(`Room "${room}" deleted`)
+      }
+    }
+
+    console.log(`Room ${room} users:`, Object.values(roomData?.users || {}))
   })
+})
+
 
   // User guesses word correctly
   socket.on('correct-guess', (name) => {

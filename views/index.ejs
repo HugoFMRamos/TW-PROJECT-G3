@@ -23,7 +23,10 @@
           <span class="room-name"><%= room %></span>
           <% const playerCount = Object.keys(rooms[room].users).length %>
           <span class="player-count"><%= playerCount %> / 4</span>
-          <% if (playerCount < 4) { %>
+
+          <% if (rooms[room].started) { %>
+            <span class="room-locked">Game in Progress</span>
+          <% } else if (playerCount < 4) { %>
             <a class="join-btn" href="/<%= room %>">Join</a>
           <% } else { %>
             <span class="room-full">Room Full</span>

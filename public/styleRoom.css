@@ -65,7 +65,7 @@ canvas {
   background: #4d00c9;  
 }
 
-.dis-btn {
+.fot-btn {
   padding: 15px;
   background: #2482bd;
   color: #fff;
@@ -78,7 +78,7 @@ canvas {
   font-weight: bold;
 }
 
-.dis-btn:hover {
+.fot-btn:hover {
   background: #0057bb;
 }
 
