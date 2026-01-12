@@ -13,6 +13,17 @@
     <script type="module" src="client.js"></script>
   </head>
   <body>
+
+    <nav class="menu">
+      <div class="menu-items">
+            <img src="/Sketch_icon.png" class="icon">
+            <div class="links">
+              <a class="item" id="btnabt">About</a>
+              <a class="item" id="btnrls">Rules</a>
+            </div>
+            <div class="icon"></div>
+      </div>
+    </nav>
     <header>
       <h2 id="timer">Time left: 60s</h2>
       <h2 id="round">Round: 0 / 0</h2>
@@ -81,5 +92,79 @@
       <button id="start-game" class="fot-btn" hidden>Start Game</button>
       <button id="disconnect" class="fot-btn">Disconnect</button>
     </footer>
+
+            <div class="about" id="about">
+      <div class="about-box">
+        <div class="about-nav">
+          <button class="close-about" id="closeabt">Close</button>
+        </div>
+        <p style="padding-left: 20px; padding-right: 20px; text-align: center;">This game was developed as the final project for the “Tecnologias Web” class, for the Multimedia Masters in Faculdade de Engenharia da Universidade do Porto.</p>
+        <div class="threemusketeers">
+          <div class="oneofus" style="grid-column: 1 / span 1">
+            <img src="/chad.jpg" class="chad">
+            <p>David Pinto</p>
+            <p><b>Design</b></p>
+          </div>
+
+          <div class="oneofus" style="grid-column: 2 / span 1">
+            <img src="/chad.jpg" class="chad">
+            <p>Gabriel Lindo</p>
+            <p><b>Game Logic</b></p>
+          </div>
+
+          <div class="oneofus" style="grid-column: 3 / span 1">
+            <img src="/chad.jpg" class="chad">
+            <p>Hugo Ramos</p>
+            <p><b>Server </b></p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="rules" id="rules">
+      <div class="rules-box">
+        <div class="rules-nav">
+          <button class="close-rules" id="closerls">Close</button>
+        </div>
+        <div class="rulesgrid">
+          <div class="rulestab" style="grid-column: 1 / span 1">
+            <p style="font-size:larger;"><b>Draw the given word</b></p>
+            <p>When you’re drawing, don’t simply write the word that appears - try your hardest to translate it into an image! You can change the size and color of your brush - the only limit is your imagination! And the timer. The longer it takes to answer correctly, the least points you and the other player receive - so make sure to be as clear as possible!</p>
+          </div>
+
+          <div class="rulestab" style="grid-column: 2 / span 1">
+            <p style="font-size:larger;"><b>Guess in the chat</b></p>
+            <p>You can send messages in the chat, to either talk with the other player, or guess the word when it’s time to play. When playing against more friends, only the first correct answer will give points, so try to be as fast as possible!</p>
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+  <script>
+    let about = document.getElementById("about");
+    let rules = document.getElementById("rules")
+    let btnabt = document.getElementById("btnabt");
+    let btnrls = document.getElementById("btnrls");
+    let closeabt = document.getElementById("closeabt")
+    let closerls = document.getElementById("closerls")
+
+
+    btnabt.addEventListener("click", function(){
+      about.style.visibility = "visible";
+    });
+
+      closeabt.addEventListener("click", function(){
+      about.style.visibility = "hidden";
+    });
+
+      btnrls.addEventListener("click", function(){
+      rules.style.visibility = "visible";
+    });
+
+      closerls.addEventListener("click", function(){
+      rules.style.visibility = "hidden";
+    });
+  </script>
   </body>
 </html>
