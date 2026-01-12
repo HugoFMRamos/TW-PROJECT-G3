@@ -187,7 +187,7 @@ io.on('connection', socket => {
           const remainingUsers = Object.keys(roomData.users)
           if (remainingUsers.length > 0) {
             roomData.host = remainingUsers[0] // pick the first remaining user
-            io.to(room).emit('new-host', roomData.users[roomData.host])
+            io.to(room).emit('new-host', roomData.users[roomData.host].name);
           } else {
             roomData.host = null
           }
@@ -292,13 +292,15 @@ function handleRoundEnd(room) {
     // Check if max rounds reached
     if (roomData.currentRound > roomData.maxRounds) {
       crownWinner(room);
-      roomData.started = false;
+      resetRoom(room);
+      return;
+      /*roomData.started = false;
 
       if (roomData.timer) {
         clearInterval(roomData.timer);
         roomData.timer = null;
       }
-      return;
+      return;*/
     }
 
     // Swap artist
@@ -331,5 +333,41 @@ function handleRoundEnd(room) {
     io.to(room).emit('game-over', {
       winners,
       score: maxScore
+    });
+  }
+
+  function resetRoom(room) {
+    const roomData = rooms[room];
+    if (!roomData) return;
+
+    // Reset players' scores
+    Object.values(roomData.users).forEach(user => {
+      user.score = 0;
+    });
+
+    // Reset game state
+    roomData.started = false;
+    roomData.currentRound = 0;
+    roomData.maxRounds = 0;
+    roomData.usedWords = [];
+    roomData.currentWord = null;
+    roomData.artist = null;
+    roomData.history = [];
+
+    // Stop timer
+    if (roomData.timer) {
+      clearInterval(roomData.timer);
+      roomData.timer = null;
+    }
+
+    roomData.timeLeft = 60;
+
+    // Update clients
+    io.to(room).emit('update-scoreboard', Object.values(roomData.users));
+    io.to(room).emit('game-reset');
+    io.to(room).emit('room-status', {
+      players: Object.keys(roomData.users).length,
+      started: false,
+      maxPlayers: MAX_PLAYERS_PER_ROOM
     });
   }

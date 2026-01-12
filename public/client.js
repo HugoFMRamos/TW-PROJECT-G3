@@ -93,7 +93,7 @@ socket.on('game-started', (data) => {
 
 socket.on('game-over', (data) => {
   const winnerNames = data.winners.map(w => w.name).join(', ');
-  appendMessage(`🏆 Winner${data.winners.length > 1 ? 's' : ''}: ${winnerNames}\nScore: ${data.score}`, 'correct');
+  appendMessage(`🏆 Winner${data.winners.length > 1 ? 's' : ''}: ${winnerNames}\nScore: ${data.score}`, 'status');
 });
 
 // Host feedback if not enough players
@@ -271,6 +271,23 @@ socket.on('artist-swap', (value) => {
     notartHeader.style.display = 'block';
   }
 })
+
+socket.on('game-reset', () => {
+  appendMessage('🔁 Game reset! Host can start a new game.', 'status');
+
+  currentWord = '';
+  wordCont.innerHTML = '';
+
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+  // Only host sees start button
+  if (isHost) {
+    startBtn.style.display = 'block';
+  }
+
+  artHeader.style.display = 'none';
+  notartHeader.style.display = 'none';
+});
 
 // --- SCOREBOARD ---
 socket.on('update-scoreboard', (users) => {
