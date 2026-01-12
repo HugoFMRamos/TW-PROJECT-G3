@@ -2,6 +2,7 @@ const express = require('express')
 const app = express()
 const server = require('http').Server(app)
 const io = require('socket.io')(server)
+const fs = require('fs');
 
 app.set('views', './views')
 app.set('view engine', 'ejs')
@@ -10,7 +11,7 @@ app.use(express.urlencoded({ extended: true }))
 
 // Store rooms: { roomName: { users: {socketId: name}, history: [] } }
 const rooms = {}
-const words = ['monkey', 'elephant', 'zebra', 'lion', 'dolphin']
+const words = JSON.parse(fs.readFileSync('./words.json', 'utf-8'));
 const MAX_PLAYERS_PER_ROOM = 4;
 
 app.get('/', (req, res) => {
@@ -25,7 +26,8 @@ app.post('/room', (req, res) => {
   rooms[room] = { 
     users: {}, 
     history: [], 
-    currentWord: words[Math.floor(Math.random() * words.length)],
+    usedWords: [],
+    currentWord: null,
     timer: null,
     timeLeft: 60,
     currentRound: 0,
@@ -127,8 +129,12 @@ io.on('connection', socket => {
       io.to(id).emit('artist-swap', id === roomData.artist);
     });
 
+    // Get word
+    roomData.currentWord = words[Math.floor(Math.random() * words.length)];
+    roomData.usedWords.push(roomData.currentWord);
+
     // Send first word to artist
-    io.to(roomData.artist).emit('current-word', roomData.currentWord);
+    io.to(room).emit('current-word', roomData.currentWord);
 
     // Start timer
     startRoomTimer(room);
@@ -227,6 +233,17 @@ function getUserRooms(socket) {
   }, [])
 }
 
+function getUniqueWord(room) {
+  const roomData = rooms[room];
+  let word;
+  do {
+    word = words[Math.floor(Math.random() * words.length)];
+  } while (roomData.usedWords.includes(word));
+  
+  roomData.usedWords.push(word);
+  return word;
+}
+
 function swapArtist(room) {
   const roomData = rooms[room]
   if (!roomData) return
@@ -288,7 +305,7 @@ function handleRoundEnd(room) {
     swapArtist(room);
 
     // Pick new word
-    const newWord = words[Math.floor(Math.random() * words.length)];
+    const newWord = getUniqueWord(room);
     roomData.currentWord = newWord;
     io.to(room).emit('current-word', newWord);
 

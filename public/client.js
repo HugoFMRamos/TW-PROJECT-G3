@@ -125,7 +125,7 @@ window.addEventListener('beforeunload', (event) => {
 socket.on('chat-message', data => appendMessage(`${data.name}: ${data.message}`, 'regular'));
 socket.on('user-connected', (name) => {
   appendMessage(`${name} connected`, 'status');
-  userScore(name);
+  //userScore(name);
 });
 socket.on('user-disconnected', name => appendMessage(`${name} disconnected`, 'status'));
 socket.on('correct-message', (name, word) => appendMessage(`${name} guessed <b>${word}</b> correctly! Next word...`, 'correct'));
