@@ -12,6 +12,7 @@ const disconnectBtn = document.getElementById('disconnect');
 const startBtn = document.getElementById('start-game');
 const timerDisplay = document.getElementById('timer');
 const scoreCont = document.querySelector(".score-panel")
+const roundDisplay = document.getElementById('round')
 
 let drawing = false;
 let lastX = 0;
@@ -78,9 +79,26 @@ startBtn.addEventListener('click', () => {
   socket.emit('start-game', roomName);
 });
 
+socket.on('round-update', (data) => {
+  if (roundDisplay) {
+    roundDisplay.innerText = `Round: ${data.currentRound} / ${data.maxRounds}`;
+  }
+});
+
+socket.on('game-started', (data) => {
+  if (roundDisplay) {
+    roundDisplay.innerText = `Round: ${data.currentRound} / ${data.maxRounds}`;
+  }
+});
+
+socket.on('game-over', (data) => {
+  const winnerNames = data.winners.map(w => w.name).join(', ');
+  appendMessage(`🏆 Winner${data.winners.length > 1 ? 's' : ''}: ${winnerNames}\nScore: ${data.score}`, 'correct');
+});
+
 // Host feedback if not enough players
 socket.on('not-enough-players', () => {
-  alert('At least 2 players are required to start the game.');
+  appendMessage('At least 2 players are required to start the game.', 'status');
 });
 
 socket.on('game-started', () => {

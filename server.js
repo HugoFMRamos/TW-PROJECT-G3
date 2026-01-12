@@ -28,6 +28,8 @@ app.post('/room', (req, res) => {
     currentWord: words[Math.floor(Math.random() * words.length)],
     timer: null,
     timeLeft: 60,
+    currentRound: 0,
+    maxRounds: 0,
     artist: null }
   res.redirect(room)
   io.emit('room-created', room)
@@ -113,7 +115,10 @@ io.on('connection', socket => {
     }
 
     roomData.started = true;
-    io.to(room).emit('game-started');
+    roomData.currentRound = 1;
+    roomData.maxRounds = Object.keys(roomData.users).length * 2;
+
+    io.to(room).emit('game-started', { currentRound: roomData.currentRound, maxRounds: roomData.maxRounds });
 
     // Assign first artist if none
     if (!roomData.artist) roomData.artist = Object.keys(roomData.users)[0];
@@ -196,25 +201,21 @@ io.on('connection', socket => {
 
   // User guesses word correctly
   socket.on('correct-guess', (name) => {
-    const userRooms = getUserRooms(socket)
+    const userRooms = getUserRooms(socket);
     userRooms.forEach(room => {
       const roomData = rooms[room];
       if (!roomData) return;
 
-      // Update scores
-      if (roomData.users[socket.id]) {
-        roomData.users[socket.id].score += roomData.timeLeft;
-      }
-      io.to(room).emit('correct-message', name, roomData.currentWord)
-      io.in(room).emit('update-scoreboard', Object.values(roomData.users));
+      roomData.users[socket.id].score += roomData.timeLeft;
 
-      // Change word and artist
-      const newWord = words[Math.floor(Math.random() * words.length)]
-      roomData.currentWord = newWord
-      io.to(room).emit('current-word', newWord)
-      swapArtist(room)
-      startRoomTimer(room)
-    })
+      //Update scoreboard
+      io.to(room).emit('update-scoreboard', Object.values(roomData.users));
+
+      io.to(room).emit('correct-message', name, roomData.currentWord);
+
+      // End the round
+      handleRoundEnd(room);
+    });
   })
 })
 
@@ -248,7 +249,6 @@ function startRoomTimer(room) {
   // Clear previous timer if exists
   if (roomData.timer) clearInterval(roomData.timer);
   roomData.timeLeft = 60;
-
   io.to(room).emit('timer-update', roomData.timeLeft);
 
   roomData.timer = setInterval(() => {
@@ -259,17 +259,60 @@ function startRoomTimer(room) {
       clearInterval(roomData.timer);
       roomData.timer = null;
 
-      // Time ran out → swap artist
-      io.to(room).emit('no-guess', roomData.currentWord);
-      swapArtist(room);
-
-      // Pick a new word
-      const newWord = words[Math.floor(Math.random() * words.length)];
-      roomData.currentWord = newWord;
-      io.to(room).emit('current-word', newWord);
-
-      // Restart timer for next round
-      startRoomTimer(room);
+      //End the round
+      handleRoundEnd(room);
     }
   }, 1000);
 }
+
+function handleRoundEnd(room) {
+    const roomData = rooms[room];
+    if (!roomData) return;
+
+    // Increment round
+    roomData.currentRound += 1;
+
+    // Check if max rounds reached
+    if (roomData.currentRound > roomData.maxRounds) {
+      crownWinner(room);
+      roomData.started = false;
+
+      if (roomData.timer) {
+        clearInterval(roomData.timer);
+        roomData.timer = null;
+      }
+      return;
+    }
+
+    // Swap artist
+    swapArtist(room);
+
+    // Pick new word
+    const newWord = words[Math.floor(Math.random() * words.length)];
+    roomData.currentWord = newWord;
+    io.to(room).emit('current-word', newWord);
+
+    // Restart timer for next round
+    startRoomTimer(room);
+
+    // Broadcast current round to clients
+    io.to(room).emit('round-update', { currentRound: roomData.currentRound, maxRounds: roomData.maxRounds });
+  }
+
+  function crownWinner(room) {
+    const roomData = rooms[room];
+    if (!roomData) return;
+
+    const players = Object.values(roomData.users);
+
+    // Find highest score
+    const maxScore = Math.max(...players.map(p => p.score));
+
+    // Handle ties
+    const winners = players.filter(p => p.score === maxScore);
+
+    io.to(room).emit('game-over', {
+      winners,
+      score: maxScore
+    });
+  }
